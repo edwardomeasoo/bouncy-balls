@@ -18,17 +18,23 @@ function randomRGB() {
   return `rgb(${random(0,255)},${random(0,255)},${random(0,255)})`;
 }
 
-// ball object, created with inputs x, y, velX, velY, color, size
-class Ball {
-  constructor(x, y, velX, velY, color, size) {
+class Shape {
+  constructor( x, y, velX, velY ) {
     // x and y coord are measured from top left corner of window as (0,0)
-    // size = radius in px
     this.x = x;
     this.y = y;
     this.velX = velX;
     this.velY = velY;
+  }
+}
+
+// ball object, created with inputs x, y, velX, velY, color, size
+class Ball extends Shape {
+  constructor( x, y, velX, velY, color, size ) {
+    super( x, y, velX, velY );
     this.color = color;
-    this.size = size;
+    this.size = size; // size = radius in px
+    this.exists = true; // tracks if ball has been eaten by player
   }
 
   // drawing the ball
@@ -58,7 +64,7 @@ class Ball {
   collisionDetect() {
     for (const ball of balls) {
       // skip loop if ball being updated (this) is the ball being looped over (ball)
-      if (!(this === ball)) {
+      if (!(this === ball) && ball.exists) {
         const dx = this.x - ball.x;
         const dy = this.y - ball.y;
         const dist = Math.sqrt( dx ** 2 + dy ** 2 );
@@ -81,8 +87,8 @@ while (balls.length < 25) {
     // initial position > 1 width away from window edge
     random( 0+size, width-size ),
     random( 0+size, width-size ),
-    random( -7, 7 ),
-    random( -7, 7 ),
+    random( -5, 5 ),
+    random( -5, 5 ),
     randomRGB(),
     size
   );
