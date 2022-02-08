@@ -37,7 +37,7 @@ class Ball extends Shape {
     this.exists = true; // tracks if ball has been eaten by player
   }
 
-  // drawing the ball
+  // drawing the ball, based on position, size, colour
   draw() {
     ctx.beginPath();
     ctx.fillStyle = this.color;
@@ -78,7 +78,72 @@ class Ball extends Shape {
   }
 }
 
-// add balls to canvas, animate them
+// player controlled object
+class EvilCircle extends Shape {
+  constructor( x, y ) {
+    super( x, y, 20, 20 );
+    this.color = 'white';
+    this.size = 10; // size = radius in px
+    // enable user to move evil circle with wasd
+    window.addEventListener('keydown', (e) => {
+      switch( e.key ) {
+        case 'w':
+          this.y -= this.velY;
+          break;
+        case 'a':
+          this.x -= this.velX;
+          break;
+        case 's':
+          this.y += this.velY;
+          break;
+        case 'd':
+          this.x += this.velX;
+          break;
+      }
+    });
+  }
+
+  // drawing the evil circle - don't fill, only outline
+  draw() {
+    ctx.beginPath();
+    ctx.strokeStyle = this.color;
+    // increase line thickness
+    ctx.lineWidth = 3;
+    // draw arc: x&y of arc center, radius, start and end position of arc in radians
+    ctx.arc( this.x, this.y, this.size, 0, 2 * Math.PI );
+    ctx.stroke(); // finish path started with beginPath(), fill area with fillStyle
+  }
+
+  // updating evil circle position - bounce if evil circle hits edge of window
+  checkBounds() {
+    // right edge
+    if ((this.x + this.size) >= width) { this.x -= this.size; }
+    // left edge
+    if ((this.x - this.size) <= 0) { this.x += this.size; }
+    // bottom edge
+    if ((this.y - this.size) <= 0) { this.y += this.size; }
+    // top edge
+    if ((this.y + this.size) >= height) { this.y -= this.size; }
+  }
+
+  collisionDetect() {
+    for (const ball of balls) {
+      // check if ball has already been eaten
+      if (ball.exists) {
+        const dx = this.x - ball.x;
+        const dy = this.y - ball.y;
+        const dist = Math.sqrt( dx ** 2 + dy ** 2 );
+
+        // check collision, update color of both balls
+        if (dist < (this.size + ball.size )) {
+          ball.exists = false;
+        }
+      }
+    }
+  }
+}
+
+// create, add Ball instances to canvas
 const balls = [];
 
 while (balls.length < 25) {
@@ -96,17 +161,27 @@ while (balls.length < 25) {
   balls.push(ball);
 }
 
+const ec = new EvilCircle( 
+  random( 10, width-10 ), 
+  random( 10, width-10 )
+  );
+
 function loop() { 
   // animation loop- each new frame will darken previous frame, then draw new balls
   // draw rectangle to fill window, colour it transparent black
   ctx.fillStyle = 'rgba(0,0,0,0.25)'; 
   ctx.fillRect( 0, 0, width, height );
 
-  // draw balls, update position
+  // draw balls and evil circle, update position
   for (const ball of balls) {
-    ball.draw();
-    ball.update();
-    ball.collisionDetect();
+    if (ball.exists) {  
+      ball.draw();
+      ball.update();
+      ball.collisionDetect();
+    }
+    ec.draw();
+    ec.checkBounds();
+    ec.collisionDetect();
   }
   requestAnimationFrame(loop);
 }
